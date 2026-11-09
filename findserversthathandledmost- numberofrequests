@@ -1,0 +1,44 @@
+
+from typing import List
+from sortedcontainers import SortedList
+import heapq
+
+class Solution:
+    def busiestServers(self, k: int, arrival: List[int], load: List[int]) -> List[int]:
+        available = SortedList(range(k))
+        busy = []
+        count = [0] * k
+
+        for i in range(len(arrival)):
+            start = arrival[i]
+            duration = load[i]
+
+            # Free servers whose requests are completed
+            while busy and busy[0][0] <= start:
+                end_time, server_id = heapq.heappop(busy)
+                available.add(server_id)
+
+            # If all servers are busy, skip request
+            if not available:
+                continue
+
+            # Find the preferred available server
+            idx = available.bisect_left(i % k)
+
+            # Wrap around to the first available server
+            if idx == len(available):
+                idx = 0
+
+            server_id = available.pop(idx)
+
+            # Update request count
+            count[server_id] += 1
+
+            # Mark server as busy
+            heapq.heappush(busy, (start + duration, server_id))
+
+        # Find maximum number of requests
+        max_requests = max(count)
+
+        # Return all busiest servers
+        return [i for i in range(k) if count[i] == max_requests]
